@@ -336,7 +336,7 @@ def play(item):
     # If player don't have a "play" function, not uses the standard play from platformtools
     else:
         logger.debug('Executing core "play" method')
-        platformtools.play_video(item)
+        platformtools.play_video(item, autoplay=getattr(item, 'autoplay', False))
 
 
 def findvideos(item, itemlist=[]):

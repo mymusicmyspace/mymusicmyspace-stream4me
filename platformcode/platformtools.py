@@ -1062,6 +1062,8 @@ def play_video(item, strm=False, force_direct=False, autoplay=False):
             return
 
         default_action = config.get_setting("default_action")
+        if autoplay and default_action == 0:
+            default_action = 2
         logger.debug("default_action=%s" % default_action)
 
         # pass referer

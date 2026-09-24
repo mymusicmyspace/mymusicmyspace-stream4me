@@ -312,6 +312,93 @@ class SearchWindow(xbmcgui.WindowXML):
 
         return channels_list
 
+    def open_streamingcommunity(self, item):
+        mode = item.type or item.contentType or item.infoLabels.get('mediatype') or item.mode
+        if mode == 'tv':
+            mode = 'tvshow'
+        tmdb_id = item.infoLabels.get('tmdb_id') or item.infoLabels.get('id')
+        if mode not in ['movie', 'tvshow'] or not tmdb_id:
+            return False
+
+        tmdb_id = str(tmdb_id)
+        title = item.text or item.contentTitle or item.contentSerieName or item.title
+        if 'streamingcommunity' not in self.get_channels():
+            self.RESULTS.reset()
+            self.RESULTS.setVisible(False)
+            self.NORESULTS.setVisible(True)
+            self.setFocusId(CLOSE)
+            return True
+
+        try:
+            from channels import streamingcommunity
+            search_item = Item(channel='streamingcommunity', contentType=mode)
+            results = streamingcommunity.search(search_item.clone(), title)
+            match = next((result for result in results
+                          if result.contentType == mode and
+                          str(result.infoLabels.get('tmdb_id') or '') == tmdb_id), None)
+
+            if not match and mode == 'movie' and results and results[-1].nextPage and item.infoLabels.get('year'):
+                results = streamingcommunity.search(search_item.clone(), '%s %s' % (title, item.infoLabels['year']))
+                match = next((result for result in results
+                              if result.contentType == mode and
+                              str(result.infoLabels.get('tmdb_id') or '') == tmdb_id), None)
+
+            original_title = item.infoLabels.get('originaltitle')
+            if not match and original_title and original_title != title:
+                results = streamingcommunity.search(search_item.clone(), original_title)
+                match = next((result for result in results
+                              if result.contentType == mode and
+                              str(result.infoLabels.get('tmdb_id') or '') == tmdb_id), None)
+
+            if not match:
+                self.RESULTS.reset()
+                self.RESULTS.setVisible(False)
+                self.NORESULTS.setVisible(True)
+                self.setFocusId(CLOSE)
+                return True
+
+            match.infoLabels = item.infoLabels
+            match.title = item.title or match.title
+            match.thumbnail = item.thumbnail or match.thumbnail
+            match.fanart = item.fanart or match.fanart
+            match.contentType = mode
+            match.global_search = False
+            match.autoplay = True
+            if mode == 'movie':
+                match.contentTitle = item.contentTitle or title
+                from platformcode.launcher import findvideos
+                findvideos(match)
+            else:
+                match.contentSerieName = item.contentSerieName or title
+                self.episodes = streamingcommunity.episodios(match)
+                for episode in self.episodes:
+                    episode.global_search = False
+                    episode.autoplay = True
+                self.show_episodes(self.episodes)
+        except Exception:
+            import traceback
+            logger.error('StreamingCommunity direct search failed')
+            logger.error(traceback.format_exc())
+            self.NORESULTS.setVisible(True)
+            self.setFocusId(CLOSE)
+        return True
+
+    def show_episodes(self, episodes):
+        items = []
+        for episode in episodes:
+            it = xbmcgui.ListItem(episode.title)
+            it.setProperty('item', episode.tourl())
+            items.append(it)
+
+        if not items:
+            items = [xbmcgui.ListItem(config.get_localized_string(60347))]
+            items[0].setProperty('thumb', channelselector.get_thumb('nofolder.png'))
+
+        self.Focus(EPISODES)
+        self.EPISODESLIST.reset()
+        self.EPISODESLIST.addItems(items)
+        self.setFocusId(EPISODESLIST)
+
     def timer(self):
         while self.searchActions or self.thActions.is_alive():
             if self.exit: return
@@ -545,8 +632,9 @@ class SearchWindow(xbmcgui.WindowXML):
                 if self.item.type:
                     self.item.mode = self.item.type
                     self.item.text = scrapertools.title_unify(self.item.text)
-                thread = Thread(target=self.search)
-                thread.start()
+                if not self.open_streamingcommunity(self.item):
+                    thread = Thread(target=self.search)
+                    thread.start()
             elif self.item.mode in ['movie', 'tvshow', 'person_']:
                 self.select()
             elif self.item.mode in ['person']:
@@ -666,9 +754,10 @@ class SearchWindow(xbmcgui.WindowXML):
                 item.folder = False
 
                 logger.debug(item)
-                Search(item, self.thActions)
-                if close_action:
-                    self.close()
+                if not self.open_streamingcommunity(item):
+                    Search(item, self.thActions)
+                    if close_action:
+                        self.close()
 
         elif control_id in [RESULTS, EPISODESLIST]:
             busy(True)
@@ -704,20 +793,7 @@ class SearchWindow(xbmcgui.WindowXML):
 
             self.episodes = self.itemsResult if self.itemsResult else []
             self.itemsResult = []
-            ep = []
-            for item in self.episodes:
-                it = xbmcgui.ListItem(item.title)
-                it.setProperty('item', item.tourl())
-                ep.append(it)
-
-            if not ep:
-                ep = [xbmcgui.ListItem(config.get_localized_string(60347))]
-                ep[0].setProperty('thumb', channelselector.get_thumb('nofolder.png'))
-
-            self.Focus(EPISODES)
-            self.EPISODESLIST.reset()
-            self.EPISODESLIST.addItems(ep)
-            self.setFocusId(EPISODESLIST)
+            self.show_episodes(self.episodes)
 
             busy(False)
 
