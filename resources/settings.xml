@@ -5,7 +5,7 @@
         <setting label="70786" type="lsep"/>
         <setting id="autostart" type="bool" label="70706" default="false"/>
         <setting label="70579" type="lsep"/>
-        <setting id="addon_update_enabled" type="bool" label="70581" default="true"/>
+        <setting id="addon_update_enabled" type="bool" label="70581" default="false"/>
         <setting id="addon_update_message" type="bool" label="70582" visible="eq(-1,true)" default="true"/>
         <setting id="addon_update_timer" type="slider" option="int" range="1,1,24" label="707416" visible="eq(-2,true)" default="1"/>
         <setting label="70787" type="lsep"/>
@@ -21,7 +21,7 @@
     <category label="70753">
         <setting id="player_mode" type="select" lvalues="30026|30027|30028|30029" label="30044" default="1"/>
         <setting id="default_action" type="select" lvalues="30006|30007|30008" label="30005" default="0"/>
-        <setting id="autoplay" type="bool" label="70562" default="false" visible="true"/>
+        <setting id="autoplay" type="bool" label="70562" default="true" visible="true"/>
         <setting id="servers_favorites" visible="true" type="action" label="60551" action="RunPlugin(plugin://plugin.video.s4me/?ew0KICAgICJhY3Rpb24iOiAic2VydmVyc19mYXZvcml0ZXMiLA0KICAgICJjaGFubmVsIjogInNldHRpbmciDQp9==)"/>
         <setting id="servers_blacklist" visible="true" type="action" label="60550" action="RunPlugin(plugin://plugin.video.s4me/?ew0KICAgICJhY3Rpb24iOiAic2VydmVyc19ibGFja2xpc3QiLA0KICAgICJjaGFubmVsIjogInNldHRpbmciDQp9==)"/>
         <setting id="window_type" type="select" lvalues="60622|60623" label="60621" default="0"/>
@@ -45,7 +45,7 @@
         <setting id="next_ep_type" type="select" label="70754" lvalues="70755|70756|70757" default="0" visible="!eq(-1,0)" subsetting="true"/>
         <setting id="next_ep_seconds" type="slider" option="int" range="20,10,240" label="70749" default="40" visible="!eq(-2,0)" subsetting="true"/>
         <setting id="watched_setting" type="slider" option="int" range="20,5,90" label="60634" default="80"/>
-        <setting id="trakt_sync" type="bool" label="70109" default="false"/>
+        <setting id="trakt_sync" type="bool" label="70109" default="true"/>
         <setting label="30030" type="lsep"/>
         <setting id="vidolibrary_preferences" type="action" label="60542" action="RunPlugin(plugin://plugin.video.s4me/?ew0KICAgICJhY3Rpb24iOiAiY2hhbm5lbF9jb25maWciLA0KICAgICJjaGFubmVsIjogInZpZGVvbGlicmFyeSINCn0==)"/>
         <setting id="vidolibrary_update" type="action" label="60568" action="RunPlugin(plugin://plugin.video.s4me/?ew0KICAgICJhY3Rpb24iOiAidXBkYXRlX3ZpZGVvbGlicmFyeSIsDQogICAgImNoYW5uZWwiOiAidmlkZW9saWJyYXJ5Ig0KfQ==)"/>
@@ -130,13 +130,13 @@
     <category label="70126">
         <!-- Homepage -->
         <setting label="70716" type="lsep"/>
-        <setting id="enable_news_menu" label="30130" type="bool" default="true"/>
-        <setting id="enable_channels_menu" label="30118" type="bool" default="true"/>
+        <setting id="enable_news_menu" label="30130" type="bool" default="false"/>
+        <setting id="enable_channels_menu" label="30118" type="bool" default="false"/>
         <setting id="enable_search_menu" label="30103" type="bool" default="true"/>
-        <setting id="enable_onair_menu" label="50001" type="bool" default="true"/>
-        <setting id="enable_link_menu" label="70527" type="bool" default="true"/>
-        <setting id="enable_fav_menu" label="30102" type="bool" default="true"/>
-        <setting id="enable_library_menu" label="30131" type="bool" default="true"/>
+        <setting id="enable_onair_menu" label="50001" type="bool" default="false"/>
+        <setting id="enable_link_menu" label="70527" type="bool" default="false"/>
+        <setting id="enable_fav_menu" label="30102" type="bool" default="false"/>
+        <setting id="enable_library_menu" label="30131" type="bool" default="false"/>
         <setting label="30000" type="lsep"/>
         <setting id="touch_view" label='30002' type="bool" default="false"/>
         <setting id="viewchange_notify" label='70514' type="bool" default="false"/>
@@ -174,3 +174,4 @@
         <setting id="video_thumbnail_type" type="select" label="70131" lvalues="70132|70133" default="1"/>
     </category>
 </settings>
+

@@ -26,6 +26,7 @@ import xbmcgui
 import xbmc
 from threading import Thread
 from core.support import dbg
+from specials import sc_only
 
 info_language = ["de", "en", "es", "fr", "it", "pt"] # from videolibrary.json
 def_lang = info_language[config.get_setting("info_language", "videolibrary")]
@@ -33,24 +34,13 @@ def_lang = info_language[config.get_setting("info_language", "videolibrary")]
 
 def mainlist(item):
     logger.debug()
-
-    if platformtools.get_window() not in ('WINDOW_SETTINGS_MENU', 'WINDOW_SETTINGS_INTERFACE', 'WINDOW_SKIN_SETTINGS')\
-            and xbmc.getInfoLabel('System.CurrentWindow') in ('Home', '') and config.get_setting('new_search'):
-        itemlist = [Item(channel='globalsearch', title=config.get_localized_string(70276), action='Search', mode='all', thumbnail=get_thumb("search.png"), folder=False),
-                    Item(channel='globalsearch', title=config.get_localized_string(70741) % config.get_localized_string(30122), action='Search', mode='movie', type='movie', thumbnail=get_thumb("search_movie.png"),folder=False),
-                    Item(channel='globalsearch', title=config.get_localized_string(70741) % config.get_localized_string(30123), action='Search', mode='tvshow', type='tvshow',thumbnail=get_thumb("search_tvshow.png"), folder=False),
-                    Item(channel='globalsearch', title=config.get_localized_string(70741) % config.get_localized_string(70314), action='Search', page=1, mode='person', thumbnail=get_thumb("search_star.png"), folder=False)]
-    else:
-        itemlist = [Item(channel=item.channel, title=config.get_localized_string(70276), action='new_search', mode='all', thumbnail=get_thumb("search.png")),
-                    Item(channel=item.channel, title=config.get_localized_string(70741) % config.get_localized_string(30122), action='new_search', mode='movie', thumbnail=get_thumb("search_movie.png")),
-                    Item(channel=item.channel, title=config.get_localized_string(70741) % config.get_localized_string(30123), action='new_search', mode='tvshow', thumbnail=get_thumb("search_tvshow.png")),
-                    Item(channel=item.channel, title=config.get_localized_string(70741) % config.get_localized_string(70314), action='new_search', page=1, mode='person', thumbnail=get_thumb("search_star.png"))]
-
-    itemlist += [Item(channel=item.channel, title=config.get_localized_string(59995), action='saved_search', thumbnail=get_thumb('search.png')),
-                Item(channel=item.channel, title=config.get_localized_string(60420), action='sub_menu', thumbnail=get_thumb('search.png')),
-                Item(channel="tvmoviedb", title=config.get_localized_string(70274), action="mainlist", thumbnail=get_thumb("search.png")),
-                Item(channel=item.channel, title=typo(config.get_localized_string(59994), 'color std bold'), action='setting_channel_new', thumbnail=get_thumb('setting_0.png'),folder=False),
-                Item(channel='shortcuts', title=typo(config.get_localized_string(70286), 'color std bold'), action='SettingOnPosition', category=5, setting=1, thumbnail=get_thumb('setting_0.png'),folder=False)]
+    itemlist = [
+        Item(channel='globalsearch', title=config.get_localized_string(70741) % config.get_localized_string(30122),
+             action='Search', mode='movie', type='movie', thumbnail=get_thumb('search_movie.png'), folder=False),
+        Item(channel='globalsearch', title=config.get_localized_string(70741) % config.get_localized_string(30123),
+             action='Search', mode='tvshow', type='tvshow', thumbnail=get_thumb('search_tvshow.png'), folder=False),
+        Item(channel=item.channel, title=config.get_localized_string(60420), action='sub_menu', thumbnail=get_thumb('search.png')),
+    ]
 
     itemlist = set_context(itemlist)
     return itemlist
@@ -656,71 +646,50 @@ def actor_list(item):
 
 
 def discover_list(item):
-    import datetime
     itemlist = []
+    page = int(item.page or (item.discovery or {}).get('page', 1))
+    offset = int(item.candidate_offset or 0)
+    total_pages = page
 
-    year = 0
-    tmdb_inf = tmdb.discovery(item, dict_=item.discovery, cast=item.cast_)
-    result = tmdb_inf.results
-    tvshow = False
+    while len(itemlist) < 20:
+        candidate_page = item.clone(page=str(page),
+                                   discovery=dict(item.discovery) if item.discovery else '')
+        tmdb_inf = tmdb.discovery(candidate_page, dict_=candidate_page.discovery, cast=item.cast_)
+        results = tmdb_inf.results or []
+        total_pages = tmdb_inf.total_pages
+        if not results:
+            break
 
-    for elem in result:
-        elem = tmdb_inf.get_infoLabels(elem, origen=elem)
-        if 'title' in elem:
-            title = unify.normalize(elem['title']).capitalize()
+        for index in range(offset, len(results)):
+            elem = tmdb_inf.get_infoLabels(results[index], origen=results[index])
+            title = unify.normalize(elem.get('title') or elem.get('name', '')).capitalize()
+            mode = item.mode or elem.get('mediatype', '').replace('tv', 'tvshow')
+            elem['tmdb_id'] = elem.get('id')
+            matched = sc_only.match(elem, title, mode)
+            if matched:
+                matched.title = typo(title, 'bold')
+                matched.thumbnail = elem.get('thumbnail', '')
+                matched.fanart = elem.get('fanart', '')
+                matched.infoLabels = elem
+                matched.context = ''
+                itemlist.append(matched)
+            if len(itemlist) == 20:
+                offset = index + 1
+                break
         else:
-            title = unify.normalize(elem['name']).capitalize()
-            tvshow = True
-        elem['tmdb_id'] = elem['id']
+            offset = len(results)
 
-        mode = item.mode or elem['mediatype']
-        thumbnail = elem.get('thumbnail', '')
-        fanart = elem.get('fanart', '')
+        if offset >= len(results):
+            page += 1
+            offset = 0
+        if page > total_pages:
+            break
 
-        if item.cast_:
-            release = elem.get('release_date', '0000') or elem.get('first_air_date', '0000')
-            year = scrapertools.find_single_match(release, r'(\d{4})')
-
-        if not item.cast_ or (item.cast_ and (int(year) <= int(datetime.datetime.today().year))):
-            if config.get_setting('new_search'):
-                new_item = Item(channel='globalsearch', title=typo(title, 'bold'), infoLabels=elem,
-                                action='Search', text=title,
-                                thumbnail=thumbnail, fanart=fanart,
-                                context='', mode='search', type = mode, contentType=mode,
-                                release_date=year, folder = False)
-            else:
-                new_item = Item(channel='search', title=typo(title, 'bold'), infoLabels=elem,
-                                action='channel_search', text=title,
-                                thumbnail=thumbnail, fanart=fanart,
-                                context='', mode=mode, contentType=mode,
-                                release_date=year)
-
-            if tvshow:
-                new_item.contentSerieName = title
-            else:
-                new_item.contentTitle = title
-
-            itemlist.append(new_item)
-
-    itemlist = set_context(itemlist)
-
-    if item.cast_:
-        itemlist.sort(key=lambda it: int(it.release_date), reverse=True)
-        return itemlist
-
-    elif len(result) > 19 and item.discovery:
-        item.discovery['page'] = str(int(item.discovery['page']) + 1)
-        itemlist.append(item.clone(channel=item.channel, action='discover_list', nextPage=True,
-                             title=typo(config.get_localized_string(30992), 'color std bold'),
-                             list_type=item.list_type, discovery=item.discovery, thumbnail=thumb(), page=item.discovery['page']))
-    elif len(result) > 19:
-        next_page = str(int(item.page) + 1)
-
-        itemlist.append(item.clone(channel=item.channel, action='discover_list', nextPage=True,
-                             title=typo(config.get_localized_string(30992), 'color std bold'),
-                             list_type=item.list_type, search_type=item.search_type, mode=item.mode, page=next_page, thumbnail=thumb()))
-
-    return itemlist
+    if itemlist and page <= total_pages:
+        itemlist.append(item.clone(action='discover_list', nextPage=True,
+                                   title=typo(config.get_localized_string(30992), 'color std bold'),
+                                   page=str(page), candidate_offset=offset, thumbnail=thumb()))
+    return set_context(itemlist)
 
 
 def from_context(item):
@@ -832,3 +801,4 @@ def get_saved_searches():
             saved_searches_list.append(Item().fromjson(json.dumps(saved_search_item)))
 
     return saved_searches_list
+

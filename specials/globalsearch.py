@@ -9,6 +9,7 @@ from platformcode import platformtools, config, logger
 from platformcode.launcher import run
 from threading import Thread
 from specials.search import save_search
+from specials import sc_only
 
 if sys.version_info[0] >= 3:
     PY3 = True
@@ -187,22 +188,18 @@ class SearchWindow(xbmcgui.WindowXML):
                 title = result.get('title', '')
                 result['mode'] = result['media_type'].replace('tv', 'tvshow')
 
+            matched = sc_only.match(result, title, result['mode'])
+            if not matched:
+                continue
+
             thumbnail = result.get('thumbnail', '')
             noThumb = 'Infoplus/' + result['mode'].replace('show','') + '.png'
             fanart = result.get('fanart', '')
             year = result.get('release_date', '')
             rating = str(result.get('vote_average', ''))
 
-            new_item = Item(channel='globalsearch',
-                            action="Search",
-                            title=title,
-                            thumbnail=thumbnail,
-                            fanart=fanart,
-                            mode='search',
-                            type=result['mode'],
-                            contentType=result['mode'],
-                            text=title,
-                            infoLabels=result)
+            new_item = matched.clone(title=title, thumbnail=thumbnail, fanart=fanart,
+                                     infoLabels=result)
 
             if self.item.mode == 'movie':
                 new_item.contentTitle = result['title']
@@ -211,7 +208,7 @@ class SearchWindow(xbmcgui.WindowXML):
 
             it = xbmcgui.ListItem(title)
             it.setProperties({'thumb': result.get('thumbnail', noThumb), 'fanart': result.get('fanart', ''), 'rating': '    [' + rating + ']' if rating else '',
-                              'plot': result.get('overview', ''), 'search': 'search', 'release_date': '', 'item': new_item.tourl(),
+                              'plot': result.get('overview', ''), 'release_date': '', 'item': new_item.tourl(),
                               'year': '   [' + year.split('/')[-1] + ']' if year else '    [' + result.get('first_air_date','').split('-')[0] + ']'})
             self.items.append(it)
 
@@ -290,6 +287,8 @@ class SearchWindow(xbmcgui.WindowXML):
 
         for ch in all_channels:
             channel = ch.channel
+            if channel != 'streamingcommunity':
+                continue
             ch_param = channeltools.get_channel_parameters(channel)
             if not ch_param.get("active", False):
                 continue
@@ -671,7 +670,6 @@ class SearchWindow(xbmcgui.WindowXML):
         elif control_id in [RESULTS, EPISODESLIST]:
             busy(True)
             if control_id in [RESULTS]:
-                name = self.CHANNELS.getSelectedItem().getLabel()
                 self.pos = self.RESULTS.getSelectedPosition()
                 item = Item().fromurl(self.RESULTS.getSelectedItem().getProperty('item'))
             else:
@@ -777,3 +775,4 @@ class SearchWindow(xbmcgui.WindowXML):
         server.window = True
         server.globalsearch = True
         return run(server)
+

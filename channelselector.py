@@ -12,13 +12,6 @@ def getmainlist(view="thumb_"):
     logger.debug()
     itemlist = list()
 
-    try:
-        from core.filetools import isdir
-        kodpath = os.path.abspath(os.path.join(config.get_data_path(), "../plugin.video.kod"))
-        if isdir(kodpath):
-            itemlist.append(Item(title="Migrazione KoD -> S4Me", action="migrate"))
-    except:
-        pass
     # Main Menu Channels
     if addon.getSetting('enable_news_menu') == "true":
         itemlist.append(Item(title=config.get_localized_string(30130), channel="news", action="mainlist",
@@ -56,12 +49,6 @@ def getmainlist(view="thumb_"):
         itemlist.append(Item(title=config.get_localized_string(30101), channel="downloads", action="mainlist", thumbnail=get_thumb("downloads.png", view), viewmode="list",
                              context=[{"title": config.get_localized_string(70288), "channel": "shortcuts", "action": "SettingOnPosition", "category":6}]))
 
-    thumb_setting = "setting_%s.png" % 0  # config.get_setting("plugin_updates_available")
-
-    itemlist.append(Item(title=config.get_localized_string(30100), channel="setting", action="settings",
-                         thumbnail=get_thumb(thumb_setting, view), category=config.get_localized_string(30100), viewmode="list", folder=False))
-    itemlist.append(Item(title=config.get_localized_string(30104) + " (v" + config.get_addon_version(with_fix=True) + ")", channel="help", action="mainlist",
-                         thumbnail=get_thumb("help.png", view), category=config.get_localized_string(30104), viewmode="list"))
     return itemlist
 
 
@@ -283,3 +270,4 @@ def auto_filter(auto_lang=False):
         lang = 'all'
 
     return lang
+

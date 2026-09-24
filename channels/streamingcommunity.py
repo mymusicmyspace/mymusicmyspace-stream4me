@@ -210,7 +210,10 @@ def episodios(item):
                            action='findvideos',
                            contentType='episode',
                            contentSerieName=item.fulltitle,
-                           url='{}/it/iframe/{}?episode_id={}'.format(host, se['title_id'], ep['id'])))
+                            url='{}/it/iframe/{}?episode_id={}'.format(host, se['title_id'], ep['id'])))
+    if item.sc_verified:
+        from specials import sc_only
+        itemlist = [episode for episode in itemlist if sc_only.playable(episode)]
 
     if config.get_setting('episode_info') and not support.stackCheck(['add_tvshow', 'get_newest']):
         support.tmdb.set_infoLabels_itemlist(itemlist, seekTmdb=True)
@@ -225,3 +228,4 @@ def findvideos(item):
     itemlist = [item.clone(title=channeltools.get_channel_parameters(item.channel)['title'],
                            url=item.url.replace('/watch/', '/iframe/'), server='streamingcommunityws')]
     return support.server(item, itemlist=itemlist, referer=False)
+
