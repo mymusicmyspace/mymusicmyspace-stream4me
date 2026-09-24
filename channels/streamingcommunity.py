@@ -63,7 +63,7 @@ def genres(item):
 def search(item, text):
     logger.debug('search', text)
     item.search = True
-    item.url = host + '/it/search?q=' + text
+    item.url = host + '/it/search?q=' + urllib_parse.quote_plus(text)
 
     try:
         return peliculas(item)
@@ -228,4 +228,5 @@ def findvideos(item):
     itemlist = [item.clone(title=channeltools.get_channel_parameters(item.channel)['title'],
                            url=item.url.replace('/watch/', '/iframe/'), server='streamingcommunityws')]
     return support.server(item, itemlist=itemlist, referer=False)
+
 
