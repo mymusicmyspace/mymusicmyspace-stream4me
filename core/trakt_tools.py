@@ -29,13 +29,14 @@ def auth_trakt():
         post = {'client_id': client_id}
         post = jsontools.dump(post)
         # Se solicita url y código de verificación para conceder permiso a la app
-        url = "http://api.trakt.tv/oauth/device/code"
+        url = "https://auth.trakt.tv/oauth/device/code"
         data = httptools.downloadpage(url, post=post, headers=headers).data
         data = jsontools.load(data)
         item.verify_url = data["verification_url"]
         item.user_code = data["user_code"]
         item.device_code = data["device_code"]
         item.intervalo = data["interval"]
+        item.expires_in = data["expires_in"]
         if not item.folder:
             token_trakt(item)
 
@@ -60,13 +61,13 @@ def token_trakt(item):
     try:
         if item.extra == "renew":
             refresh = config.get_setting("refresh_token_trakt", "trakt")
-            url = "https://api.trakt.tv/oauth/token"
+            url = "https://auth.trakt.tv/oauth/token"
             post = {'refresh_token': refresh, 'client_id': client_id, 'client_secret': client_secret,
                     'redirect_uri': 'urn:ietf:wg:oauth:2.0:oob', 'grant_type': 'refresh_token'}
             data = httptools.downloadpage(url, post=post).data
             data = jsontools.load(data)
         elif item.action == "token_trakt":
-            url = "http://api.trakt.tv/oauth/device/token"
+            url = "https://auth.trakt.tv/oauth/device/token"
             post = "code=%s&client_id=%s&client_secret=%s" % (item.device_code, client_id, client_secret)
             data = httptools.downloadpage(url, post=post, headers=headers).data
             data = jsontools.load(data)
@@ -78,14 +79,15 @@ def token_trakt(item):
                                                         config.get_localized_string(60254))
 
             # Generalmente cada 5 segundos se intenta comprobar si el usuario ha introducido el código
-            while True:
+            deadline = time.time() + int(item.expires_in)
+            while time.time() < deadline:
                 time.sleep(item.intervalo)
                 try:
                     if dialog_auth.iscanceled():
                         config.set_setting("trakt_sync", False)
                         return
 
-                    url = "http://api.trakt.tv/oauth/device/token"
+                    url = "https://auth.trakt.tv/oauth/device/token"
                     post = {'code': item.device_code, 'client_id': client_id, 'client_secret': client_secret}
                     post = jsontools.dump(post)
                     data = httptools.downloadpage(url, post=post, headers=headers).data
@@ -286,3 +288,4 @@ def update_all():
     for mediatype in ['movies', 'shows']:
         trakt_data = get_trakt_watched('tmdb', mediatype, True)
         update_trakt_data(mediatype, trakt_data)
+
