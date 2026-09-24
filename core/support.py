@@ -1365,7 +1365,7 @@ def server(item, data='', itemlist=[], headers='', CheckLinks=True, Download=Tru
         addQualityTag(item, verifiedItemlist, data, patronTag)
 
     # Check Links
-    if not item.global_search and config.get_setting('checklinks') and CheckLinks: # and not config.get_setting('autoplay'):
+    if config.get_setting('checklinks') and CheckLinks: # and not config.get_setting('autoplay'):
         checklinks_number = config.get_setting('checklinks_number')
         verifiedItemlist = servertools.check_list_links(verifiedItemlist, checklinks_number)
 

@@ -26,7 +26,6 @@ import xbmcgui
 import xbmc
 from threading import Thread
 from core.support import dbg
-from specials import sc_only
 
 info_language = ["de", "en", "es", "fr", "it", "pt"] # from videolibrary.json
 def_lang = info_language[config.get_setting("info_language", "videolibrary")]
@@ -666,14 +665,26 @@ def discover_list(item):
             title = unify.normalize(elem.get('title') or elem.get('name', '')).capitalize()
             mode = item.mode or elem.get('mediatype', '').replace('tv', 'tvshow')
             elem['tmdb_id'] = elem.get('id')
-            matched = sc_only.match(elem, title, mode)
-            if matched:
-                matched.title = typo(title, 'bold')
-                matched.thumbnail = elem.get('thumbnail', '')
-                matched.fanart = elem.get('fanart', '')
-                matched.infoLabels = elem
-                matched.context = ''
-                itemlist.append(matched)
+            thumbnail = elem.get('thumbnail', '')
+            fanart = elem.get('fanart', '')
+
+            if config.get_setting('new_search'):
+                new_item = Item(channel='globalsearch', title=typo(title, 'bold'), infoLabels=elem,
+                                action='Search', text=title,
+                                thumbnail=thumbnail, fanart=fanart,
+                                context='', mode='search', type=mode, contentType=mode,
+                                folder=False)
+            else:
+                new_item = Item(channel='search', title=typo(title, 'bold'), infoLabels=elem,
+                                action='channel_search', text=title,
+                                thumbnail=thumbnail, fanart=fanart,
+                                context='', mode=mode, contentType=mode)
+
+            if mode == 'tvshow':
+                new_item.contentSerieName = title
+            else:
+                new_item.contentTitle = title
+            itemlist.append(new_item)
             if len(itemlist) == 20:
                 offset = index + 1
                 break
