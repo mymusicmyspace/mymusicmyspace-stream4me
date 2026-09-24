@@ -648,10 +648,11 @@ def actor_list(item):
 def discover_list(item):
     itemlist = []
     page = int(item.page or (item.discovery or {}).get('page', 1))
+    first_page = page
     offset = int(item.candidate_offset or 0)
     total_pages = page
 
-    while len(itemlist) < 20:
+    while len(itemlist) < 20 and page == first_page:
         candidate_page = item.clone(page=str(page),
                                    discovery=dict(item.discovery) if item.discovery else '')
         tmdb_inf = tmdb.discovery(candidate_page, dict_=candidate_page.discovery, cast=item.cast_)
@@ -685,7 +686,7 @@ def discover_list(item):
         if page > total_pages:
             break
 
-    if itemlist and page <= total_pages:
+    if page <= total_pages:
         itemlist.append(item.clone(action='discover_list', nextPage=True,
                                    title=typo(config.get_localized_string(30992), 'color std bold'),
                                    page=str(page), candidate_offset=offset, thumbnail=thumb()))
@@ -801,4 +802,5 @@ def get_saved_searches():
             saved_searches_list.append(Item().fromjson(json.dumps(saved_search_item)))
 
     return saved_searches_list
+
 
