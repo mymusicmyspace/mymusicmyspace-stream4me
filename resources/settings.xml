@@ -136,7 +136,7 @@
         <setting id="enable_onair_menu" label="50001" type="bool" default="false"/>
         <setting id="enable_link_menu" label="70527" type="bool" default="false"/>
         <setting id="enable_fav_menu" label="30102" type="bool" default="false"/>
-        <setting id="enable_library_menu" label="30131" type="bool" default="false"/>
+        <setting id="enable_library_menu" label="30131" type="bool" default="true"/>
         <setting label="30000" type="lsep"/>
         <setting id="touch_view" label='30002' type="bool" default="false"/>
         <setting id="viewchange_notify" label='70514' type="bool" default="false"/>
