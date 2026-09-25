@@ -1402,6 +1402,8 @@ def get_dialogo_opciones(item, default_action, strm, autoplay):
 
             if len(opciones) == 0:
                 error = True
+        elif item.channel == 'streamingcommunity' and item.contentType == 'episode':
+            dialog_notification(config.get_localized_string(20000), config.get_localized_string(90008), icon=1)
 
     else:
         dialog_notification(puedes, motivo)

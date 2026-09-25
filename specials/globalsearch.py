@@ -334,6 +334,12 @@ class SearchWindow(xbmcgui.WindowXML):
             self.setFocusId(CLOSE)
             return True
 
+        progress = None
+        if mode == 'tvshow':
+            progress = platformtools.dialog_progress_bg(config.get_localized_string(20000),
+                                                        config.get_localized_string(90007))
+            progress.update(0)
+
         try:
             from channels import streamingcommunity
             search_item = Item(channel='streamingcommunity', contentType=mode)
@@ -386,6 +392,10 @@ class SearchWindow(xbmcgui.WindowXML):
             logger.error(traceback.format_exc())
             self.NORESULTS.setVisible(True)
             self.setFocusId(CLOSE)
+        finally:
+            if progress:
+                progress.update(100)
+                progress.close()
         return True
 
     def show_episodes(self, episodes):
@@ -742,7 +752,7 @@ class SearchWindow(xbmcgui.WindowXML):
         elif control_id in [MENU]:
             self.context()
 
-        elif search:
+        elif search and control_id == RESULTS:
             pos = self.RESULTS.getSelectedPosition()
             if search == 'next':
                 self.page += 1

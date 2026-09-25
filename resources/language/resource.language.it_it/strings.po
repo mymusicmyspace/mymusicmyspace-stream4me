@@ -6525,6 +6525,14 @@ msgctxt "#90006"
 msgid "Elementum is already installed"
 msgstr "Elementum è già installato"
 
+msgctxt "#90007"
+msgid "Loading TV show and episodes..."
+msgstr "Caricamento serie TV ed episodi..."
+
+msgctxt "#90008"
+msgid "No playable link was found for this episode on StreamingCommunity."
+msgstr "Nessun link riproducibile trovato per questo episodio su StreamingCommunity."
+
 msgctxt "#70991"
 msgid "Modalita' Tiny: mostra solo i canali essenziali"
 msgstr ""
