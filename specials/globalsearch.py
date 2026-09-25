@@ -426,6 +426,7 @@ class SearchWindow(xbmcgui.WindowXML):
     def search(self):
         logger.debug()
         self.count = 0
+        self.LOADING.setVisibleCondition('true')
         self.LOADING.setVisible(True)
         Thread(target=self.timer).start()
 

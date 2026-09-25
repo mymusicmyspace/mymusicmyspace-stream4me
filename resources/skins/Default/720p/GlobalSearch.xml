@@ -12,7 +12,9 @@
         <control type='group' id="2"/>
         <control type='group' id="3"/>
         <control type='group' id="4"/>
-        <control type='group' id="5"/>
+        <control type='group' id="5">
+            <visible>false</visible>
+        </control>
 
         <control type="image"> <!-- BACKGROUND -->
             <description>Window Background</description>
