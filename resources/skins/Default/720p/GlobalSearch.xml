@@ -29,9 +29,6 @@
             <description>Main Group</description>
             <left>0</left>
             <top>0</top>
-            <animation type="WindowOpen" reversible="false">
-                <effect type="fade" delay="160" end="100" time="300" />
-            </animation>
             <animation type="WindowClose" reversible="false">
                 <effect type="fade" delay="160" start="100" end="0" time="300" />
             </animation>
@@ -66,7 +63,6 @@
                 <control type="group"> <!-- Search Result Group -->
                     <description>Search Result Group</description>
                     <visible>Integer.IsGreater(Container(102).NumItems, 0)</visible>
-                    <animation effect="fade" time="200">Visible</animation>
 
                     <control type="textbox">
                         <description>Item Title</description>
@@ -610,6 +606,7 @@
 
         <control type="progress" id="500">
             <description>Progress Bar</description>
+            <visible>false</visible>
             <top>350</top>
             <left>240</left>
             <width>800</width>

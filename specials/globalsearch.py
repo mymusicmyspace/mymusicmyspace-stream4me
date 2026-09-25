@@ -108,6 +108,8 @@ class SearchWindow(xbmcgui.WindowXML):
         self.lastSearch()
         if not self.item.text: return
 
+        if self.item.mode in ['movie', 'tvshow']:
+            self.prepare_results()
         self.doModal()
 
     def lastSearch(self):
@@ -164,9 +166,8 @@ class SearchWindow(xbmcgui.WindowXML):
             lastLen = len(self.searchActions)
             logger.debug(lastLen)
 
-    def select(self):
+    def prepare_results(self):
         logger.debug()
-        self.PROGRESS.setVisible(False)
         self.items = []
         if self.item.mode == 'person_':
             tmdb_info = tmdb.discovery(self.item, dict_=self.item.discovery)
@@ -215,6 +216,10 @@ class SearchWindow(xbmcgui.WindowXML):
                               'year': '   [' + year.split('/')[-1] + ']' if year else '    [' + result.get('first_air_date','').split('-')[0] + ']'})
             self.items.append(it)
 
+    def select(self):
+        self.PROGRESS.setVisible(False)
+        if self.item.mode == 'person_':
+            self.prepare_results()
         if self.items:
             self.RESULTS.reset()
             self.RESULTS.addItems(self.items)
@@ -426,6 +431,8 @@ class SearchWindow(xbmcgui.WindowXML):
     def search(self):
         logger.debug()
         self.count = 0
+        self.PROGRESS.setVisibleCondition('true')
+        self.PROGRESS.setVisible(True)
         self.LOADING.setVisibleCondition('true')
         self.LOADING.setVisible(True)
         Thread(target=self.timer).start()
